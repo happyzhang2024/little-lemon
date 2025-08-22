@@ -105,7 +105,7 @@ struct UserProfile: View {
                     Button("Discard changes") { reloadFromStorage() }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color.clear)
+                        //.background(Color.clear)
                         .foregroundColor(.secondary4)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
