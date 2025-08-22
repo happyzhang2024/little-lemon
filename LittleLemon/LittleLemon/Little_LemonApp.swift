@@ -10,11 +10,28 @@ import SwiftUI
 @main
 struct Little_LemonApp: App {
     let persistenceController = PersistenceController.shared
+    
+    @AppStorage(kIsLoggedIn) private var isLoggedIn: Bool = false
 
+    init() {
+            let ap = UITabBarAppearance()
+            ap.configureWithOpaqueBackground()
+            ap.backgroundColor = .systemBackground
+            UITabBar.appearance().standardAppearance = ap
+            UITabBar.appearance().scrollEdgeAppearance = ap  
+        }
+    
     var body: some Scene {
         WindowGroup {
-            Onboarding()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            Group {
+                if isLoggedIn {
+                    NavigationStack { Home() }
+                } else {
+                    Onboarding()
+                }
+            }
+            .id(isLoggedIn)
+            .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
 }

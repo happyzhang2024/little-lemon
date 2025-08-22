@@ -126,6 +126,11 @@ private struct CategoryBar: View {
     var categories: [MenuCategory] = MenuCategory.allCases
     
     var body: some View {
+        Text("ORDER FOR DELIVERY!")
+            .font(.custom("Karla-Extrabold", size: 24))
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
         HStack(spacing: 12) {
             ForEach(categories) { cat in
                 Button {
@@ -208,14 +213,13 @@ private struct MenuListView: View {
     let dishes: [Dish]
     
     var body: some View {
-        List {
-            ForEach(dishes, id: \.objectID) { dish in
-                DishRow(dish: dish)
+            List {
+                ForEach(dishes, id: \.objectID) { dish in
+                    DishRow(dish: dish)
+                }
             }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemBackground))
+            .listStyle(.plain)
+            //.scrollContentBackground(.visible)
     }
 }
 

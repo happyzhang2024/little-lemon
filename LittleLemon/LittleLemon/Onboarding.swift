@@ -22,8 +22,7 @@ let kNewsletter = "notifyNewsletter_key"
 let kProfileImage = "profileImage_key"
 
 struct Onboarding: View {
-    @State var isLoggedIn = false
-    
+    @AppStorage(kIsLoggedIn) private var isLoggedIn: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -44,15 +43,9 @@ struct Onboarding: View {
                 .frame(maxWidth: .infinity, alignment: .top)
                 .ignoresSafeArea(edges: .top)
                 
-                RegisterView(isLoggedIn: $isLoggedIn)
+                RegisterView()
                 Spacer()
                 
-            }
-            .onAppear(){
-                isLoggedIn = UserDefaults.standard.bool(forKey: kIsLoggedIn)
-            }
-            .navigationDestination(isPresented: $isLoggedIn) {
-                Home()
             }
         }
     }
@@ -76,33 +69,33 @@ enum FontDumper {
 }
 
 struct RegisterView: View {
-    @Binding var isLoggedIn: Bool
+    @AppStorage(kIsLoggedIn) private var isLoggedIn: Bool = true
     
-    @AppStorage(kFirstName) private var firstNameStored: String = ""
-    @AppStorage(kLastName) private var lastNameStored: String = ""
-    @AppStorage(kEmail) private var emailStored: String = ""
+    @AppStorage(kFirstName) private var firstName: String = ""
+    @AppStorage(kLastName) private var lastName: String = ""
+    @AppStorage(kEmail) private var email: String = ""
     
-    @State var firstName = ""
-    @State var lastName = ""
-    @State var email = ""
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    
     
     var body: some View {
         VStack {
-            Text("First Name*")
+            Text("Name*")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .appFont(.categories)
-            TextField("First Name", text: $firstName)
+            TextField("Name", text: $firstName)
                 .textFieldStyle(.roundedBorder)
                 .appFont(.categories)
-            
+            /*
             Text("Last Name*")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .appFont(.categories)
             
             TextField("Last Name", text: $lastName)
-                .textFieldStyle(.roundedBorder)
+                //.textFieldStyle(.roundedBorder)
                 .appFont(.categories)
-            
+            */
             Text("Email*")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .appFont(.categories)
@@ -110,16 +103,17 @@ struct RegisterView: View {
                 .textFieldStyle(.roundedBorder)
                 .appFont(.categories)
             
-            Button("Register") {
-                guard !firstName.isEmpty, !lastName.isEmpty, !email.isEmpty else {
-                    print("Fields must not be empty"); return
+            Button("Next") {
+                guard !firstName.isEmpty, !email.isEmpty else {
+                    alertMessage = "Fields must not be empty"
+                    showAlert = true
+                    return
                 }
                 guard isValidEmail(email) else {
-                    print("Invalid email format"); return
+                    alertMessage = "Invalid email format"
+                    showAlert = true
+                    return
                 }
-                firstNameStored = firstName
-                lastNameStored = lastName
-                emailStored = email
                 isLoggedIn = true
             }
             .frame(maxWidth: .infinity)
@@ -134,6 +128,9 @@ struct RegisterView: View {
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .top)
         .ignoresSafeArea(edges: .top)
+        .alert(alertMessage, isPresented: $showAlert) {
+            Button("OK", role: .cancel) {}
+        }
     }
 }
 

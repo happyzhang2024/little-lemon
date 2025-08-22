@@ -42,6 +42,8 @@ struct Home: View {
             showProfileOnLaunch = false
             showProfileSheet = true
         }
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarBackground(Color(.systemBackground), for: .tabBar)
     }
 }
 

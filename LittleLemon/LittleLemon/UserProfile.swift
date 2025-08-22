@@ -21,6 +21,8 @@ struct UserProfile: View {
     @AppStorage(kPasswordChanges) private var passwordChangesStored = false
     @AppStorage(kSpecialOffers) private var specialOffersStored = false
     @AppStorage(kNewsletter) private var newsletterStored = false
+    
+    @AppStorage(kIsLoggedIn) private var isLoggedIn = true
       
     @State private var firstName = ""
     @State private var lastName = ""
@@ -35,9 +37,13 @@ struct UserProfile: View {
     @State private var avatarImage: UIImage? = nil
     @State private var photoItem: PhotosPickerItem? = nil
     @State private var avatarRemoved = false
-    
+
+    @State private var showLogoutConfirm = false
+
     @Environment(\.dismiss) var dismiss
-    @State private var showInvalidEmail = false
+    
+    @State private var showAlert = false
+    @State private var showAlertMessage = ""
     
     var body: some View {
         VStack {
@@ -70,6 +76,30 @@ struct UserProfile: View {
                     specialOffers: $specialOffers,
                     newsletter: $newsletter
                 )
+                
+                Button(role: .destructive) {
+                    showLogoutConfirm = true
+                } label: {
+                    Text("Log out")
+                        .appFont(.cardTitle)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.primary2)
+                        .foregroundColor(Color("Secondary 4"))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.red.opacity(0.6), lineWidth: 1)
+                        )
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+                .alert("Log out?", isPresented: $showLogoutConfirm) {
+                    Button("Cancel", role: .cancel) {}
+                    Button("Log out", role: .destructive) { logout() }
+                } message: {
+                    Text("This will clear your profile data on this device.")
+                }
                 
                 HStack(spacing: 12) {
                     Button("Discard changes") { reloadFromStorage() }
@@ -108,7 +138,7 @@ struct UserProfile: View {
         .toolbarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .onAppear{ reloadFromStorage() }
-        .alert("Invalid email format", isPresented: $showInvalidEmail) {
+        .alert(showAlertMessage, isPresented: $showAlert) {
             Button("OK", role: .cancel) {}
         }
         .onChange(of: photoItem) {
@@ -145,7 +175,6 @@ struct UserProfile: View {
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .cornerRadius(8)
             }
             .padding(.bottom, 8)
 
@@ -154,7 +183,6 @@ struct UserProfile: View {
                 TextField("Phone number", text: $phone)
                     .textFieldStyle(.roundedBorder)
                     .keyboardType(.numberPad)
-                    .cornerRadius(8)
             }
             .padding(.bottom, 8)
 
@@ -225,6 +253,35 @@ struct UserProfile: View {
         return textChanged || avatarChanged || notifyChanged
      }
     
+    private func logout() {
+        if let old = profileImageFilename {
+            try? FileManager.default.removeItem(at: fileURL(for: old))
+        }
+        profileImageFilename = nil
+
+        firstNameStored = ""
+        lastNameStored  = ""
+        emailStored     = ""
+        phoneStored     = ""
+
+        orderStatusStored    = false
+        passwordChangesStored = false
+        specialOffersStored  = false
+        newsletterStored     = false
+        showLogoutConfirm    = true
+
+        avatarRemoved = false
+        avatarImage   = nil
+        photoItem     = nil
+
+        reloadFromStorage()
+        
+        DispatchQueue.main.async {
+            isLoggedIn = false
+        }
+    }
+
+    
     private func reloadFromStorage() {
         firstName = firstNameStored
         lastName = lastNameStored
@@ -240,8 +297,15 @@ struct UserProfile: View {
     }
     
     private func save() {
-        guard !firstName.isEmpty, !lastName.isEmpty, !email.isEmpty else { return }
-        guard isValidEmail(email) else { showInvalidEmail = true; return }
+        guard !firstName.isEmpty, !lastName.isEmpty, !email.isEmpty else {
+            showAlertMessage = "Required fields cannot be empty"
+            showAlert = true
+            return
+        }
+        guard isValidEmail(email) else {
+            showAlert = true
+            showAlertMessage = "Invalid email format"
+            return }
 
         firstNameStored = firstName
         lastNameStored = lastName
@@ -273,6 +337,7 @@ struct UserProfile: View {
     private func fileURL(for filename: String) -> URL {
         documentsDir.appendingPathComponent(filename)
     }
+    
 
     private var avatarPreviewImage: Image {
         if avatarRemoved {
@@ -285,7 +350,6 @@ struct UserProfile: View {
              return Image(systemName: "person.crop.circle.fill")
          }
      }
-    
     
 }
 
